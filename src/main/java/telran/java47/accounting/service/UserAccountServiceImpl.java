@@ -16,13 +16,13 @@ import telran.java47.accounting.model.UserAccount;
 @Service
 @RequiredArgsConstructor
 public class UserAccountServiceImpl implements UserAccountService {
-	
+
 	final UserAccountRepository userAccountRepository;
 	final ModelMapper modelMapper;
 
 	@Override
 	public UserDto register(UserRegisterDto userRegisterDto) {
-		if(userAccountRepository.existsById(userRegisterDto.getLogin())) {
+		if (userAccountRepository.existsById(userRegisterDto.getLogin())) {
 			throw new UserExistsException();
 		}
 		UserAccount userAccount = modelMapper.map(userRegisterDto, UserAccount.class);
@@ -39,25 +39,40 @@ public class UserAccountServiceImpl implements UserAccountService {
 
 	@Override
 	public UserDto removeUser(String login) {
-		// TODO Auto-generated method stub
-		return null;
+		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+		userAccountRepository.delete(userAccount);
+
+		return modelMapper.map(userAccount, UserDto.class);
 	}
 
 	@Override
 	public UserDto updateUser(String login, UserEditDto userEditDto) {
-		// TODO Auto-generated method stub
-		return null;
+		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+		userAccount.setFirstName(userEditDto.getFirstName());
+		userAccount.setLastName(userEditDto.getLastName());
+		userAccountRepository.save(userAccount);
+		return modelMapper.map(userAccount, UserDto.class);
 	}
 
 	@Override
 	public RolesDto changeRolesList(String login, String role, boolean isAddRole) {
-		// TODO Auto-generated method stub
-		return null;
+		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+		if(isAddRole) {
+			userAccount.addRole(role);
+			}
+		else {
+			userAccount.removeRole(role);
+		}
+		userAccountRepository.save(userAccount);
+		RolesDto roles= new RolesDto(userAccount.getLogin(), userAccount.getRoles());
+		return roles;
 	}
 
 	@Override
 	public void changePassword(String login, String newPassword) {
-		// TODO Auto-generated method stub
+		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
+		userAccount.setPassword(newPassword);
+		userAccountRepository.save(userAccount);
 
 	}
 
