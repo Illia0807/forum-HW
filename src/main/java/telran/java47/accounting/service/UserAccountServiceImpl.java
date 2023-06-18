@@ -1,5 +1,6 @@
 package telran.java47.accounting.service;
 
+import org.mindrot.jbcrypt.BCrypt;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
@@ -26,6 +27,8 @@ public class UserAccountServiceImpl implements UserAccountService {
 			throw new UserExistsException();
 		}
 		UserAccount userAccount = modelMapper.map(userRegisterDto, UserAccount.class);
+		String password = BCrypt.hashpw(userRegisterDto.getPassword(), BCrypt.gensalt());
+		userAccount.setPassword(password);
 		userAccount.addRole("USER");
 		userAccountRepository.save(userAccount);
 		return modelMapper.map(userAccount, UserDto.class);
@@ -57,21 +60,21 @@ public class UserAccountServiceImpl implements UserAccountService {
 	@Override
 	public RolesDto changeRolesList(String login, String role, boolean isAddRole) {
 		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
-		if(isAddRole) {
+		if (isAddRole) {
 			userAccount.addRole(role);
-			}
-		else {
+		} else {
 			userAccount.removeRole(role);
 		}
 		userAccountRepository.save(userAccount);
-		RolesDto roles= new RolesDto(userAccount.getLogin(), userAccount.getRoles());
+		RolesDto roles = new RolesDto(userAccount.getLogin(), userAccount.getRoles());
 		return roles;
 	}
 
 	@Override
 	public void changePassword(String login, String newPassword) {
 		UserAccount userAccount = userAccountRepository.findById(login).orElseThrow(UserNotFoundException::new);
-		userAccount.setPassword(newPassword);
+		String password = BCrypt.hashpw(newPassword, BCrypt.gensalt());
+		userAccount.setPassword(password);
 		userAccountRepository.save(userAccount);
 
 	}
