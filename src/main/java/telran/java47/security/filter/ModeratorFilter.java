@@ -2,7 +2,6 @@ package telran.java47.security.filter;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -18,30 +17,34 @@ import org.springframework.stereotype.Component;
 import lombok.RequiredArgsConstructor;
 import telran.java47.accounting.dao.UserAccountRepository;
 import telran.java47.accounting.model.UserAccount;
-
+import telran.java47.post.dao.PostRepository;
+import telran.java47.post.model.Post;
 @Component
-@Order(20)
+@Order(60)
 @RequiredArgsConstructor
-public class AdminFilter implements Filter {
+public class ModeratorFilter implements Filter {
+	
+	final PostRepository postRepository;
 	final UserAccountRepository userAccountRepository;
-
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		String path = request.getServletPath();
-		// System.out.println(request.getUserPrincipal().getName());
+		
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			Principal principal = request.getUserPrincipal();
+			System.out.println("delete post");
 			String[] arr = path.split("/");
-			String user = arr[arr.length - 1];
-			UserAccount userAccount = userAccountRepository.findById(principal.getName()).get();
-			if (!(principal.getName().equalsIgnoreCase(user) 
-					|| userAccount.getRoles().contains("Administrator".toUpperCase()))) {
-				response.sendError(406);
+			String id = arr[arr.length - 1];
+			Post post=postRepository.findById(id).orElse(null);
+			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
+			if(!post.getAuthor().equalsIgnoreCase(principal.getName())||!userAccount.getRoles().contains("MODERATOR".toUpperCase())) {
+				response.sendError(403);
 				return;
 			}
+			
 		}
 		chain.doFilter(request, response);
 
@@ -51,17 +54,18 @@ public class AdminFilter implements Filter {
 
 	private boolean checkEndPoint(String method, String path) {
 
-		return ("DELETE".equalsIgnoreCase(method) && path.matches("/account/user/?"));
+		return  ("DEL".equalsIgnoreCase(method) && path.matches("/forum/post/\\w+"));
 	}
 
-}
-//private boolean isAdminOrUser(HttpServletRequest request) {
-//String userName = request.getUserPrincipal().getName();
-//
-//UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
-//if (userAccount != null) {
-//	Set<String> roles = userAccount.getRoles();
-//	return roles.contains("Administrator") || userAccount.getLogin().equals(userName);
-//}
-//return false;
-//}
+
+
+	}
+
+	/*
+	 * Principal principal = request.getUserPrincipal(); String[] arr =
+	 * path.split("/"); String id = arr[arr.length - 1]; Post
+	 * post=postRepository.findById(id).orElse(null); UserAccount userAccount =
+	 * userAccountRepository.findById(request.getUserPrincipal().getName()).get();
+	 * if(!post.getAuthor().equals(principal.getName())||!userAccount.getRoles().
+	 * contains("MODERATOR".toUpperCase())) { response.sendError(403); return; }
+	 */

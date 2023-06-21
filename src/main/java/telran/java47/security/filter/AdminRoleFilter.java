@@ -30,30 +30,33 @@ public class AdminRoleFilter implements Filter {
 		HttpServletResponse response = (HttpServletResponse) resp;
 		// System.out.println(request.getUserPrincipal().getName());
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			if (isAdmin(request)) {
-				chain.doFilter(request, response);
-			} else {
-				response.sendError(403, "access denied");
+			UserAccount userAccount = userAccountRepository.findById(request.getUserPrincipal().getName()).get();
+			if(!userAccount.getRoles().contains("Administrator".toUpperCase())) {
+				response.sendError(407);
+				return;
 			}
 		}
 		chain.doFilter(request, response);
 
 	}
 
-	private boolean isAdmin(HttpServletRequest request) {
-		String userName = request.getUserPrincipal().getName();
 
-		UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
-		if (userAccount != null) {
-			Set<String> roles = userAccount.getRoles();
-			return roles.contains("Administrator") ;
-		}
-		return false;
-	}
 
 	private boolean checkEndPoint(String method, String path) {
 
-		return ("DEL".equalsIgnoreCase(method)||"PUT".equalsIgnoreCase(method) && path.matches("/account/user/\\w+/role/\\w+"));
+		return  path.matches("/account/user/\\w+/role/\\w+/?");
 	}
 
 }
+
+
+//private boolean isAdmin(HttpServletRequest request) {
+//String userName = request.getUserPrincipal().getName();
+//
+//UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
+//if (userAccount != null) {
+//	Set<String> roles = userAccount.getRoles();
+//	return roles.contains("Administrator") ;
+//}
+//return false;
+//}

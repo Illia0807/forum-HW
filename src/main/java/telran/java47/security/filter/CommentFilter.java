@@ -2,7 +2,6 @@ package telran.java47.security.filter;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -16,52 +15,35 @@ import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
-import telran.java47.accounting.dao.UserAccountRepository;
-import telran.java47.accounting.model.UserAccount;
-
 @Component
-@Order(20)
+@Order(80)
 @RequiredArgsConstructor
-public class AdminFilter implements Filter {
-	final UserAccountRepository userAccountRepository;
+public class CommentFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		String path = request.getServletPath();
-		// System.out.println(request.getUserPrincipal().getName());
+		String path=request.getServletPath();
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			Principal principal = request.getUserPrincipal();
+			System.out.println(principal);
 			String[] arr = path.split("/");
 			String user = arr[arr.length - 1];
-			UserAccount userAccount = userAccountRepository.findById(principal.getName()).get();
-			if (!(principal.getName().equalsIgnoreCase(user) 
-					|| userAccount.getRoles().contains("Administrator".toUpperCase()))) {
-				response.sendError(406);
+			if (!principal.getName().equalsIgnoreCase(user)) {
+				response.sendError(403);
 				return;
 			}
 		}
 		chain.doFilter(request, response);
 
 	}
-
-
-
 	private boolean checkEndPoint(String method, String path) {
 
-		return ("DELETE".equalsIgnoreCase(method) && path.matches("/account/user/?"));
+		return ("PUT".equalsIgnoreCase(method)
+				&& 
+				path.matches("/forum/post/\\w+/comment/\\w+"));
 	}
 
 }
-//private boolean isAdminOrUser(HttpServletRequest request) {
-//String userName = request.getUserPrincipal().getName();
-//
-//UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
-//if (userAccount != null) {
-//	Set<String> roles = userAccount.getRoles();
-//	return roles.contains("Administrator") || userAccount.getLogin().equals(userName);
-//}
-//return false;
-//}

@@ -30,9 +30,10 @@ public class AuthenticationFilter implements Filter {
 	final UserAccountRepository userAccountRepository;
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
-			throws IOException, ServletException {
+		throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
+		
 		if (checkEndPoint(request.getMethod(),request.getServletPath())) {
 			String[] credentialStrings;
 			try {
@@ -53,8 +54,14 @@ public class AuthenticationFilter implements Filter {
 
 	private boolean checkEndPoint(String method, String path) {
 		
-		return !("POST".equalsIgnoreCase(method)&& path.matches("/account/register/?"));
+		return !("POST".equalsIgnoreCase(method)  
+				&& path.matches("/account/register/?")
+				||path.matches("/forum/posts/tags")
+				||path.matches("/forum/posts/period")
+				);
 	}
+
+
 
 	private String[] getCredentials(String token) {
 		token = token.substring(6);

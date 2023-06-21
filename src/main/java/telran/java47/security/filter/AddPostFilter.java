@@ -2,7 +2,6 @@ package telran.java47.security.filter;
 
 import java.io.IOException;
 import java.security.Principal;
-import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -14,27 +13,20 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
-
-import lombok.RequiredArgsConstructor;
-import telran.java47.accounting.dao.UserAccountRepository;
-import telran.java47.accounting.model.UserAccount;
 @Component
-@Order(30)
-@RequiredArgsConstructor
-public class UpdateUserFilter implements Filter {
-	final UserAccountRepository userAccountRepository;
+@Order(50)
+public class AddPostFilter implements Filter {
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
 			throws IOException, ServletException {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
-		// System.out.println(request.getUserPrincipal().getName());
 		String path=request.getServletPath();
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
 			Principal principal = request.getUserPrincipal();
-			System.out.println(principal);
 			String[] arr = path.split("/");
+			System.out.println("add post");
 			String user = arr[arr.length - 1];
 			if (!principal.getName().equalsIgnoreCase(user)) {
 				response.sendError(403);
@@ -42,29 +34,13 @@ public class UpdateUserFilter implements Filter {
 			}
 		}
 		chain.doFilter(request, response);
-
 	}
 
-
-
+	
 	private boolean checkEndPoint(String method, String path) {
 
-		return ("PUT".equalsIgnoreCase(method)||"POST".equalsIgnoreCase(method)
+		return ("POST".equalsIgnoreCase(method)
 				&& 
-				path.matches("/account/user/\\w+/?"));
+				path.matches("/forum/post/\\w+"));
 	}
-
 }
-//||path.matches("/forum/post/\\w+?"
-//||path.matches("/forum/post/\\w+/comment/\\w+")=
-
-//private boolean isUser(HttpServletRequest request) {
-//String userName = request.getUserPrincipal().getName();
-//
-//UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
-//if (userAccount != null) {
-//	
-//	return  userAccount.getLogin().equals(userName);
-//}
-//return false;
-//}
