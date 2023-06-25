@@ -2,6 +2,7 @@ package telran.java47.security.filter;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.EnumSet;
 import java.util.Set;
 
 import javax.servlet.Filter;
@@ -13,6 +14,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
@@ -22,7 +24,7 @@ import telran.java47.accounting.model.UserAccount;
 @Component
 @Order(20)
 @RequiredArgsConstructor
-public class AdminFilter implements Filter {
+public class AdminDelFilter implements Filter {
 	final UserAccountRepository userAccountRepository;
 
 	@Override
@@ -38,7 +40,7 @@ public class AdminFilter implements Filter {
 			String user = arr[arr.length - 1];
 			UserAccount userAccount = userAccountRepository.findById(principal.getName()).get();
 			if (!(principal.getName().equalsIgnoreCase(user) 
-					|| userAccount.getRoles().contains("Administrator".toUpperCase()))) {
+					|| userAccount.getRoles().contains(Roles.ADMINISTARTOR))) {
 				response.sendError(406);
 				return;
 			}
@@ -50,8 +52,11 @@ public class AdminFilter implements Filter {
 
 
 	private boolean checkEndPoint(String method, String path) {
+		EnumSet<HttpMethod> allowedHttpMethods = EnumSet.of(HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE,
+				HttpMethod.GET);
 
-		return ("DELETE".equalsIgnoreCase(method) && path.matches("/account/user/?"));
+		return allowedHttpMethods.contains(HttpMethod.valueOf(method.toUpperCase()))
+				&& path.matches("/account/user/\\w+/?");
 	}
 
 }

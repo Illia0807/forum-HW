@@ -1,6 +1,8 @@
 package telran.java47.security.filter;
 
 import java.io.IOException;
+import java.security.Principal;
+import java.util.EnumSet;
 import java.util.Set;
 
 import javax.servlet.Filter;
@@ -12,17 +14,17 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 
 import lombok.RequiredArgsConstructor;
 import telran.java47.accounting.dao.UserAccountRepository;
 import telran.java47.accounting.model.UserAccount;
-import telran.java47.security.model.User;
 @Component
-@Order(40)
+@Order(30)
 @RequiredArgsConstructor
-public class AdminRoleFilter implements Filter {
-	
+public class UpdateByOwnerFilter implements Filter {
+	final UserAccountRepository userAccountRepository;
 
 	@Override
 	public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
@@ -30,11 +32,14 @@ public class AdminRoleFilter implements Filter {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) resp;
 		// System.out.println(request.getUserPrincipal().getName());
+		String path=request.getServletPath();
 		if (checkEndPoint(request.getMethod(), request.getServletPath())) {
-			
-			User user=(User) request.getUserPrincipal();
-			if(user.getRoles().contains(Roles.ADMINISTARTOR)) {
-				response.sendError(407);
+			Principal principal = request.getUserPrincipal();
+			System.out.println(principal);
+			String[] arr = path.split("/");
+			String user = arr[arr.length - 1];
+			if (!principal.getName().equalsIgnoreCase(user)) {
+				response.sendError(403);
 				return;
 			}
 		}
@@ -44,21 +49,28 @@ public class AdminRoleFilter implements Filter {
 
 
 
-	private boolean checkEndPoint(String method, String path) {
+	
+		
 
-		return  path.matches("/account/user/\\w+/role/\\w+/?");
-	}
+		private boolean checkEndPoint(String method, String path) {
+			EnumSet<HttpMethod> allowedHttpMethods = EnumSet.of(HttpMethod.PUT, HttpMethod.POST, HttpMethod.DELETE,
+					HttpMethod.GET);
+			return allowedHttpMethods.contains(HttpMethod.valueOf(method.toUpperCase())) && path.matches("/account/user/\\w+/?")
+					|| allowedHttpMethods.contains(HttpMethod.valueOf(method.toUpperCase()))
+							&& path.matches("/forum/post/\\w+/comment/\\w+/?");
+		}
 
 }
+//||path.matches("/forum/post/\\w+?"
+//||path.matches("/forum/post/\\w+/comment/\\w+")=
 
-
-//private boolean isAdmin(HttpServletRequest request) {
+//private boolean isUser(HttpServletRequest request) {
 //String userName = request.getUserPrincipal().getName();
 //
 //UserAccount userAccount = userAccountRepository.findById(userName).orElse(null);
 //if (userAccount != null) {
-//	Set<String> roles = userAccount.getRoles();
-//	return roles.contains("Administrator") ;
+//	
+//	return  userAccount.getLogin().equals(userName);
 //}
 //return false;
 //}
